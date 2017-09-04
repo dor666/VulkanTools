@@ -483,6 +483,7 @@ class PhysicalDeviceData {
     ArrayOfVkQueueFamilyProperties arrayof_queue_family_properties_;
     ArrayOfVkFormatProperties arrayof_format_properties_;
     ArrayOfVkExtensionProperties arrayof_extension_properties_;
+    // NOTE: There is no ArrayOfVkLayerProperties for PhysicalDevices; layers are per-Instance only.
 
    private:
     PhysicalDeviceData() = delete;
@@ -808,6 +809,8 @@ bool JsonLoader::LoadFile(const char *filename) {
             GetArray(root, "ArrayOfVkQueueFamilyProperties", &pdd_.arrayof_queue_family_properties_);
             GetArray(root, "ArrayOfVkFormatProperties", &pdd_.arrayof_format_properties_);
             GetArray(root, "ArrayOfVkExtensionProperties", &pdd_.arrayof_extension_properties_);
+            // How to handle the ArrayOfVkLayerProperties section of devsim json?  Layers are not per-Device.
+            // GetValue(root, "ArrayOfVkLayerProperties", ???);
             break;
         case SchemaId::kUnknown:
         default:
@@ -1190,6 +1193,8 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo *pCreat
         return result;
     }
 
+    // TODO: What to do if multiple instances are created?  Maintain a vector of all instances?
+
     // Our layer-specific initialization...
 
     // Get the name(s) of our configuration file(s).
@@ -1367,6 +1372,7 @@ VkResult EnumerateProperties(uint32_t src_count, const T *src_props, uint32_t *d
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceLayerProperties(uint32_t *pCount, VkLayerProperties *pProperties) {
     DebugPrintf("EnumerateInstanceLayerProperties\n");
+    // TODO should this terminate or call-down?
     return EnumerateProperties(kLayerPropertiesCount, kLayerProperties, pCount, pProperties);
 }
 
@@ -1378,6 +1384,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceExtensionProperties(const char *
     if (pLayerName && !strcmp(pLayerName, kOurLayerName)) {
         return EnumerateProperties(kExtensionPropertiesCount, kExtensionProperties, pCount, pProperties);
     }
+    // TODO should this terminate or call-down?
     return VK_ERROR_LAYER_NOT_PRESENT;
 }
 
@@ -1390,6 +1397,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
     if (pLayerName && !strcmp(pLayerName, kOurLayerName)) {
         return EnumerateProperties(kExtensionPropertiesCount, kExtensionProperties, pCount, pProperties);
     }
+    // TODO should this terminate or call-down?
     return dt->EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pCount, pProperties);
 }
 
