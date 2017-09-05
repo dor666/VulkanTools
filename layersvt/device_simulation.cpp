@@ -425,6 +425,9 @@ uint32_t loader_layer_iface_version = CURRENT_LOADER_LAYER_INTERFACE_VERSION;
 
 typedef std::vector<VkQueueFamilyProperties> ArrayOfVkQueueFamilyProperties;
 typedef std::unordered_map<uint32_t /*VkFormat*/, VkFormatProperties> ArrayOfVkFormatProperties;
+typedef std::vector<VkLayerProperties> ArrayOfVkLayerProperties;
+
+ArrayOfVkLayerProperties instance_arrayof_layer_properties;
 
 // FormatProperties utilities ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -520,6 +523,7 @@ class JsonLoader {
     void GetValue(const Json::Value &parent, const char *name, VkExtent3D *dest);
     void GetValue(const Json::Value &parent, int index, VkQueueFamilyProperties *dest);
     void GetValue(const Json::Value &parent, int index, DevsimFormatProperties *dest);
+    void GetValue(const Json::Value &parent, const char *name, VkLayerProperties *dest);
 
     // For use as warn_func in GET_VALUE_WARN().  Return true if warning occurred.
     static bool WarnIfGreater(const char *name, const uint64_t new_value, const uint64_t old_value) {
@@ -711,6 +715,18 @@ class JsonLoader {
             }
         }
         return static_cast<int>(dest->size());
+    }
+
+    int GetArray(const Json::Value &parent, const char *name, ArrayOfVkLayerProperties *dest) {
+        /*
+                // TODO
+                DebugPrintf("\t\tJsonLoader::GetValue(ArrayOfVkLayerProperties)\n");
+                const Json::Value value = parent[name];
+                if (value.type() != Json::arrayValue) {
+                    return;
+                }
+        */
+        return -1;
     }
 
     PhysicalDeviceData &pdd_;
@@ -1082,6 +1098,18 @@ void JsonLoader::GetValue(const Json::Value &parent, int index, DevsimFormatProp
     GET_VALUE(bufferFeatures);
 }
 
+void JsonLoader::GetValue(const Json::Value &parent, const char *name, VkLayerProperties *dest) {
+    DebugPrintf("\t\tJsonLoader::GetValue(VkLayerProperties)\n");
+    const Json::Value value = parent[name];
+    if (value.type() != Json::objectValue) {
+        return;
+    }
+    GET_ARRAY(layerName);  // size < VK_MAX_EXTENSION_NAME_SIZE
+    GET_VALUE(specVersion);
+    GET_VALUE(implementationVersion);
+    GET_ARRAY(description);  // size < VK_MAX_DESCRIPTION_SIZE
+}
+
 #undef GET_VALUE
 #undef GET_ARRAY
 
@@ -1137,6 +1165,22 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo *pCreat
 
     const auto dt = instance_dispatch_table(*pInstance);
 
+#ifdef ENABLE_INSTANCE_LAYERS
+    // Get list of instance layers (Remember: device layers are deprecated)
+    assert(dt->EnumerateInstanceLayerProperties);
+    instance_arrayof_layer_properties.clear();
+    result = EnumerateAll<VkLayerProperties>(&instance_arrayof_layer_properties, [&](uint32_t *count, VkLayerProperties *results) {
+        return dt->EnumerateInstanceLayerProperties(count, results);
+    });
+    if (result) {
+        return result;
+    }
+
+    // Temporarily append a "null_layer" as a proxy for pLayerName==NULL in Enumerate*ExtensionProperties().
+    const VkLayerProperties null_layer = {"", 0, 0, ""};
+    instance_arrayof_layer_properties.push_back(null_layer);
+#endif
+
     std::vector<VkPhysicalDevice> physical_devices;
     result = EnumerateAll<VkPhysicalDevice>(&physical_devices, [&](uint32_t *count, VkPhysicalDevice *results) {
         return dt->EnumeratePhysicalDevices(*pInstance, count, results);
@@ -1166,6 +1210,16 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo *pCreat
                 pdd.arrayof_format_properties_.insert({format, format_properties});
             }
         }
+
+#ifdef ENABLE_INSTANCE_LAYERS
+        // Remove the temporary null_layer
+        assert(instance_arrayof_layer_properties.size() > 0);
+        instance_arrayof_layer_properties.pop_back();
+
+// TODO Is it really useful to preserve instance_arrayof_layer_properties?
+// TODO Seems that DevSim is not the way to modify Layers; use the Loader's capabilities.
+// TODO Should Instance Extensions be appended to each Devices' Extension list?
+#endif
 
         // Override PDD members with values from configuration file(s).
         JsonLoader json_loader(pdd);
