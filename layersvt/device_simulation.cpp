@@ -1115,7 +1115,7 @@ void JsonLoader::GetValue(const Json::Value &parent, const char *name, VkPhysica
 }
 
 void JsonLoader::GetValue(const Json::Value &parent, int index, DevsimFormatProperties *dest) {
-    DebugPrintf("\t\tJsonLoader::GetValue(VkFormatProperties %d)\n", index);
+    //DebugPrintf("\t\tJsonLoader::GetValue(VkFormatProperties %d)\n", index);
     const Json::Value value = parent[index];
     if (value.type() != Json::objectValue) {
         return;
@@ -1326,7 +1326,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceProperties(VkPhysicalDevice physical
     const auto dt = instance_dispatch_table(physicalDevice);
 
     PhysicalDeviceData *pdd = PhysicalDeviceData::Find(physicalDevice);
-    DebugPrintf("GetPhysicalDeviceProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
+    //DebugPrintf("GetPhysicalDeviceProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
     if (pdd) {
         *pProperties = pdd->physical_device_properties_;
     } else {
@@ -1344,7 +1344,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceFeatures(VkPhysicalDevice physicalDe
     const auto dt = instance_dispatch_table(physicalDevice);
 
     PhysicalDeviceData *pdd = PhysicalDeviceData::Find(physicalDevice);
-    DebugPrintf("GetPhysicalDeviceFeatures physicalDevice %p pdd %p\n", physicalDevice, pdd);
+    //DebugPrintf("GetPhysicalDeviceFeatures physicalDevice %p pdd %p\n", physicalDevice, pdd);
     if (pdd) {
         *pFeatures = pdd->physical_device_features_;
     } else {
@@ -1371,7 +1371,7 @@ VkResult EnumerateProperties(uint32_t src_count, const T *src_props, uint32_t *d
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceLayerProperties(uint32_t *pCount, VkLayerProperties *pProperties) {
-    DebugPrintf("EnumerateInstanceLayerProperties\n");
+    //DebugPrintf("EnumerateInstanceLayerProperties\n");
     // TODO should this terminate or call-down?
     return EnumerateProperties(kLayerPropertiesCount, kLayerProperties, pCount, pProperties);
 }
@@ -1380,7 +1380,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceLayerProperties(uint32_t *pCount
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceExtensionProperties(const char *pLayerName, uint32_t *pCount,
                                                                     VkExtensionProperties *pProperties) {
-    DebugPrintf("EnumerateInstanceExtensionProperties pLayerName \"%s\"\n", pLayerName);
+    //DebugPrintf("EnumerateInstanceExtensionProperties pLayerName \"%s\"\n", pLayerName);
     if (pLayerName && !strcmp(pLayerName, kOurLayerName)) {
         return EnumerateProperties(kExtensionPropertiesCount, kExtensionProperties, pCount, pProperties);
     }
@@ -1390,7 +1390,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceExtensionProperties(const char *
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName,
                                                                   uint32_t *pCount, VkExtensionProperties *pProperties) {
-    DebugPrintf("EnumerateDeviceExtensionProperties physicalDevice %p pLayerName \"%s\"\n", physicalDevice, pLayerName);
+    //DebugPrintf("EnumerateDeviceExtensionProperties physicalDevice %p pLayerName \"%s\"\n", physicalDevice, pLayerName);
     std::lock_guard<std::mutex> lock(global_lock);
     const auto dt = instance_dispatch_table(physicalDevice);
 
@@ -1407,7 +1407,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceMemoryProperties(VkPhysicalDevice ph
     const auto dt = instance_dispatch_table(physicalDevice);
 
     PhysicalDeviceData *pdd = PhysicalDeviceData::Find(physicalDevice);
-    DebugPrintf("GetPhysicalDeviceMemoryProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
+    //DebugPrintf("GetPhysicalDeviceMemoryProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
     if (pdd) {
         *pMemoryProperties = pdd->physical_device_memory_properties_;
     } else {
@@ -1427,7 +1427,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevi
     const auto dt = instance_dispatch_table(physicalDevice);
 
     PhysicalDeviceData *pdd = PhysicalDeviceData::Find(physicalDevice);
-    DebugPrintf("GetPhysicalDeviceQueueFamilyProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
+    //DebugPrintf("GetPhysicalDeviceQueueFamilyProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
     if (pdd) {
         EnumerateProperties(static_cast<uint32_t>(pdd->arrayof_queue_family_properties_.size()),
                             pdd->arrayof_queue_family_properties_.data(), pQueueFamilyPropertyCount, pQueueFamilyProperties);
@@ -1453,7 +1453,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceFormatProperties(VkPhysicalDevice ph
     const auto dt = instance_dispatch_table(physicalDevice);
 
     PhysicalDeviceData *pdd = PhysicalDeviceData::Find(physicalDevice);
-    DebugPrintf("GetPhysicalDeviceFormatProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
+    //DebugPrintf("GetPhysicalDeviceFormatProperties physicalDevice %p pdd %p\n", physicalDevice, pdd);
     if (pdd) {
         const auto iter = pdd->arrayof_format_properties_.find(format);
         *pFormatProperties = (iter != pdd->arrayof_format_properties_.end()) ? iter->second : VkFormatProperties{};
